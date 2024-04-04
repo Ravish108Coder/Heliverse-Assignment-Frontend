@@ -52,7 +52,7 @@ import axios from 'axios';
       console.log(user)
       try {
         // const response = await axios.delete(`http://localhost:8080/api/users/${user._id}`);
-        const response = await axios.delete(`${import.meta.env.VITE_SERVER}/api/users/${user.id}`);
+        const response = await axios.delete(`${import.meta.env.VITE_SERVER}/api/users/${user._id}`);
         console.log(response.data);
         alert('User deleted');
         navigator('/')
