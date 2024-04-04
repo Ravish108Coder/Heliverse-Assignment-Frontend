@@ -70,7 +70,7 @@ import axios from 'axios';
           <IconButton color="amber" onClick={handleDeleteUser}>
           <i className="fa-solid fa-trash"></i>
       </IconButton>
-          <Button color='red' onClick={()=>navigator(`/updateUser/${user.id}`)}>Edit</Button>
+          <Button color='red' onClick={()=>navigator(`/updateUser/${user._id}`)}>Edit</Button>
         </div>
         <div className='absolute top-0 right-0'>
           <Checkbox color='amber' onChange={handleCheckBoxChange} className={`${user?.available ? "": "hidden"}`} checked={checked} />
