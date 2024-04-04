@@ -10,10 +10,8 @@ const Home = () => {
       <Button color="blue">Create User</Button></Link>
       <Link to={"/users/all"}>
       <Button color="red">Get Users</Button></Link>
-      <Link to="create-team">
-      <Button color="green">Create Team</Button></Link>
-        <Link to="get-team">
-      <Button color="amber">Get Team</Button></Link>
+      <Link to="get-all-teams">
+      <Button color="green">Get All Teams</Button></Link>
     </div>
     </div>
   )

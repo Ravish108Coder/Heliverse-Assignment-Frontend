@@ -4,16 +4,134 @@ import UserCard from "./UserCard"
 import React, { useEffect, useState } from "react"
 import axios from "axios"
 
-import { IconButton, Typography } from "@material-tailwind/react";
+
+import {
+  Button, IconButton, Typography, useSelect, Dialog,
+  DialogHeader,
+  DialogBody,
+  DialogFooter,
+  Textarea, Chip, Tooltip
+} from "@material-tailwind/react";
 import { ArrowRightIcon, ArrowLeftIcon } from "@heroicons/react/24/outline";
 
 import { Input } from "@material-tailwind/react";
+import { useDispatch, useSelector } from "react-redux"
+import { resetTeam } from "../store/team/teamSlice"
 
 function InputDefault({ searchName, handleFilterSearch }) {
   return (
     <div className="w-72">
-      {/* <Input label="Username" value={searchName} onChange={(e) => handleFilterSearch(e.target.value)} /> */}
       <Input label="Username" value={searchName} onChange={(e) => handleFilterSearch(e.target.value)} />
+    </div>
+  );
+}
+
+
+export function MessageDialog({ currentRef }) {
+  const [open, setOpen] = React.useState(false);
+  const teams = useSelector(state => state.team)
+  const handleOpen = () => setOpen(!open);
+  const [teamDetails, setTeamDetails] = React.useState({
+    teamName: '',
+    description: ''
+  })
+  const dispatch = useDispatch()
+  const navigator = useNavigate()
+
+  const handleSubmitTeamForm = (e) => {
+    e.preventDefault()
+    console.log('kya hua brother')
+    const fetchData = async () => {
+      console.log('kya hua brother2')
+      try {
+        const data = {
+          teamName: teamDetails.teamName,
+          description: teamDetails.description,
+          teams: teams
+        }
+        // const response = await axios.post('http://localhost:8080/api/teams', data);
+        const response = await axios.post(`${import.meta.env.VITE_SERVER}/api/teams`, data);
+        if (response.status !== 201) {
+          console.log('error creating team')
+          return
+        }
+        console.log(response.data);
+        // alert('Team created');
+        console.log('Team created')
+        handleOpen()
+        dispatch(resetTeam())
+
+        navigator('/get-all-teams')
+      } catch (error) {
+        console.log(error.message);
+      }
+    }
+    fetchData()
+    setTeamDetails({
+      teamName: '',
+      description: ''
+    })
+  }
+  return (
+    <div>
+      <Button ref={currentRef} onClick={handleOpen}>Message Dialog</Button>
+      <Dialog open={open} size="sm" handler={handleOpen}>
+        <form onSubmit={handleSubmitTeamForm}>
+          <div className="flex items-center justify-between">
+            <DialogHeader className="flex flex-col items-start">
+              {" "}
+              <Typography className="mb-1" variant="h4">
+                Create Team
+              </Typography>
+            </DialogHeader>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              className="mr-3 h-5 w-5 cursor-pointer hover:bg-black hover:text-white"
+              onClick={handleOpen}
+            >
+              <path
+                fillRule="evenodd"
+                d="M5.47 5.47a.75.75 0 011.06 0L12 10.94l5.47-5.47a.75.75 0 111.06 1.06L13.06 12l5.47 5.47a.75.75 0 11-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 01-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 010-1.06z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </div>
+          <DialogBody>
+            <Typography className="mb-10 -mt-7 " color="gray" variant="lead">
+              Write team name and description and then click button.
+            </Typography>
+            <div className="grid gap-6">
+              <Typography className="-mb-1" color="blue-gray" variant="h6">
+                TeamName
+              </Typography>
+              <Input required label="TeamName" value={teamDetails.teamName} onChange={(e) => setTeamDetails({ ...teamDetails, teamName: e.target.value })} />
+              <Textarea required label="Description" value={teamDetails.description} onChange={(e) => setTeamDetails({ ...teamDetails, description: e.target.value })} />
+            </div>
+            <div className="mt-5 flex flex-wrap gap-2">
+              {
+                // Add logic to display the team members
+                teams.map((member, index) => {
+                  return (
+                    <div key={index} className="flex items-center gap-4">
+                      <Chip size="sm" value={member.first_name + " " + member.last_name} />
+                    </div>
+                  )
+                })
+              }
+            </div>
+          </DialogBody>
+          <DialogFooter className="space-x-2">
+            <Button variant="outlined" color="red" onClick={handleOpen}>
+              cancel
+            </Button>
+            <Button type="submit" variant="gradient" color="amber">
+              Create
+            </Button>
+          </DialogFooter>
+        </form>
+      </Dialog>
     </div>
   );
 }
@@ -34,7 +152,7 @@ const UsersListCont = () => {
   const [selectedDomain, setSelectedDomain] = useState('');
   const [selectedAvailability, setSelectedAvailability] = useState('');
   const [searchName, setSearchName] = useState('')
-  const [fetchUrl, setFetchUrl] = useState('http://localhost:8080/api/users?page=1&limit=20')
+  const teams = useSelector(state => state.team)
 
 
   const handleGenderChange = (event) => {
@@ -94,7 +212,8 @@ const UsersListCont = () => {
       searchParams.set('page', 1)
       navigator({ search: searchParams.toString() });
     }
-    let url = `http://localhost:8080/api/users?page=${active}&limit=${limit}`
+    // let url = `http://localhost:8080/api/users?page=${active}&limit=${limit}`
+    let url = `${import.meta.env.VITE_SERVER}/api/users?page=${active}&limit=${limit}`
 
     if (searchParams.has('domain')) {
       setSelectedDomain(searchParams.get('domain'));
@@ -109,7 +228,9 @@ const UsersListCont = () => {
       url += `&available=${searchParams.get('available')}`
     }
 
-    if (searchName !== '') {
+    if (searchParams.has('searchName')) {
+      setSearchName(searchParams.get('searchName'));
+      searchParams.set('searchName', searchName)
       url += `&searchName=${searchName}`
     }
 
@@ -124,10 +245,10 @@ const UsersListCont = () => {
         const res = await axios.get(url, {
           signal: signal
         });
-        // console.log(res.data);
-        if (res.data.data.length === 0) {
-          navigator('/404')
-        }
+        console.log(res.data);
+        // if (res.data.data.length === 0) {
+        //   navigator('/404')
+        // }
         setUsers(res.data.data);
         setTotalPages(Math.ceil(res.data.total / limit));
       } catch (error) {
@@ -149,45 +270,47 @@ const UsersListCont = () => {
   }, [active, searchName, selectedGender, selectedDomain, selectedAvailability]);
 
   const handleFilterSearch = (value) => {
-    // const searchParams = new URLSearchParams(location.search);
-    // searchParams.set('page', 1)
-    // navigator({ search: searchParams.toString() });
+
     setSearchName(value)
-    // let url = fetchUrl
-    // if (value === '') return;
-    // url += `&searchName=${value}`
-    // const abortController = new AbortController();
-    // const signal = abortController.signal;
+    const searchParams = new URLSearchParams(location.search);
+    if (value === '') {
+      searchParams.has('searchName') && searchParams.delete('searchName')
+    } else {
+      searchParams.set('searchName', value);
+    }
+    searchParams.set('page', 1)
+    navigator({ search: searchParams.toString() });
+  }
 
-    // const fetchUsers = async () => {
-    //   try {
-    //     setActive(active => 1)
-    //     setLoading(true);
-    //     // console.log(url )
-    //     const res = await axios.get(url, {
-    //       signal: signal
-    //     });
-    //     console.log(res.data);
-    //     setUsers(res.data.data);
-    //     setTotalPages(Math.ceil(res.data.total / limit));
-    //   } catch (error) {
-    //     if (error.name === 'AbortError') {
-    //       // console.log('Request aborted');
-    //     } else {
-    //       // console.error(error);
-    //     }
-    //   } finally {
-    //     setLoading(false);
-    //   }
-    // };
+  const currentRef = React.useRef(null)
 
-    // fetchUsers();
+  const handleCreateTeam = () => {
+    console.log('hi')
+    console.log(teams)
+    if (teams.length === 0) return alert('Please add atleast one member to the team')
+    console.log('hi2')
+    currentRef.current.click()
+    return
+    const fetchData = async () => {
+      try {
+        // const response = await axios.post('http://localhost:8080/api/teams', teams);
+        const response = await axios.post(`${import.meta.env.VITE_SERVER}/api/teams`, teams);
+        console.log(response.data);
+        alert('Team created');
+      } catch (error) {
+        console.log(error.message);
+      }
+    }
+    fetchData()
   }
 
 
   return (
     <div>
-
+      <span className="hidden"><MessageDialog currentRef={currentRef} /></span>
+      <div className="absolute top-0 right-0">
+        <Button onClick={handleCreateTeam} color="green">Create Team</Button>
+      </div>
       <div className="w-full flex justify-center mb-5">
         <InputDefault searchName={searchName} handleFilterSearch={handleFilterSearch} />
       </div>
