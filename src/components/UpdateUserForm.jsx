@@ -78,7 +78,7 @@ function ControlledSelect({value, setValue, items, name}) {
   
    
 function SimpleRegistrationForm({User}) {
-    console.log(User)
+    // console.log(User)
     const genderItems = ['Male', 'Female']
     const domainItems = ["Finance", "Marketing", "Sales", "UI Designing", "Management", "IT", "Business Development"]
     const availabilityItems = ['True', 'False']
@@ -111,10 +111,10 @@ function SimpleRegistrationForm({User}) {
   
     try {
     //   const response = await axios.put(`http://localhost:8080/api/users/${User.id}`, userData);
-      const response = await axios.put(`${import.meta.env.VITE_SERVER}/api/users/${User.id}`, userData);
+      const response = await axios.put(`${import.meta.env.VITE_SERVER}/api/users/${User._id}`, userData);
       console.log(response.data);
       alert('User Updated Successfully');
-      navigator('/users/all')
+      navigator(`/user/${User._id}`)
     } catch (error) {
       console.log(error.message);
     }
